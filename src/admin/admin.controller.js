@@ -1,82 +1,64 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const Admin = require('../../db/models/admin.model');
+const Dress = require('../../db/models/dress.model');
 
-// Create a new admin
-exports.createAdmin = async (req, res) => {
+// Function to add a dress (Admin function)
+exports.addDress = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { style, size, color, available, price, description } = req.body;
 
-    // Create admin
-    const admin = await Admin.create({
-      username,
-      email,
-      password: hashedPassword,
-      role,
+    const dress = await Dress.create({
+      style,
+      size,
+      color,
+      available,
+      price,
+      description,
     });
 
-    res.status(201).json({ message: 'Admin created successfully', admin });
+    res.status(201).json({ message: 'Dress added successfully', dress });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating admin', error });
+    res.status(500).json({ message: 'Error adding dress', error });
   }
 };
 
-// Update admin details
-exports.updateAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { username, email, role } = req.body;
-
-    // Find admin by ID
-    const admin = await Admin.findByPk(id);
-    if (!admin) return res.status(404).json({ message: 'Admin not found' });
-
-    // Update admin details
-    await admin.update({ username, email, role });
-    res.status(200).json({ message: 'Admin updated successfully', admin });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating admin', error });
-  }
-};
-
-// Delete an admin
-exports.deleteAdmin = async (req, res) => {
+// Function to delete a dress (Admin function)
+exports.deleteDress = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find admin by ID
-    const admin = await Admin.findByPk(id);
-    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    const dress = await Dress.findByPk(id);
+    if (!dress) return res.status(404).json({ message: 'Dress not found' });
 
-    await admin.destroy();
-    res.status(200).json({ message: 'Admin deleted successfully' });
+    await dress.destroy();
+    res.status(200).json({ message: 'Dress deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting admin', error });
+    res.status(500).json({ message: 'Error deleting dress', error });
   }
 };
 
-// Fetch all admins
-exports.getAdmins = async (req, res) => {
-  try {
-    const admins = await Admin.findAll();
-    res.status(200).json(admins);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching admins', error });
-  }
-};
-
-// Fetch admin by ID
-exports.getAdminById = async (req, res) => {
+// Function to update dress information (Admin function)
+exports.updateDress = async (req, res) => {
   try {
     const { id } = req.params;
-    const admin = await Admin.findByPk(id);
+    const { style, size, color, available, price, description } = req.body;
 
-    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    const dress = await Dress.findByPk(id);
+    if (!dress) return res.status(404).json({ message: 'Dress not found' });
 
-    res.status(200).json(admin);
+    await dress.update({
+      style,
+      size,
+      color,
+      available,
+      price,
+      description,
+    });
+
+    res.status(200).json({ message: 'Dress updated successfully', dress });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching admin', error });
+    res.status(500).json({ message: 'Error updating dress', error });
   }
 };
+
