@@ -1,7 +1,7 @@
 const express = require('express');
 const sequelize = require('./db/connection.js');
 const userRoutes = require('./src/modules/users/user.js');
-const authRoutes = require('./src/modules/auth/auth.js'); // Import authentication routes
+const authRoutes = require('./src/modules/auth/auth.js'); 
 
 const app = express();
 const cors = require('cors');
@@ -9,10 +9,10 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-// Use user routes
+
 app.use('/api/users', userRoutes);
 
-// Use authentication routes
+
 app.use('/api/auth', authRoutes); 
 
 sequelize.sync()

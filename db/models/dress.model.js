@@ -3,12 +3,12 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../connection'); // Adjust according to your Sequelize instance
 
 const Dress = sequelize.define('Dress', {
-    dress_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    name: {
+    style: {
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -16,14 +16,33 @@ const Dress = sequelize.define('Dress', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    price: {
-        type: DataTypes.FLOAT,
+    color: {
+        type: DataTypes.STRING,
         allowNull: false
     },
     available: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+    },
+    price: {
+        type: DataTypes.FLOAT,
+        allowNull: false
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    created_at: {
+        type: DataTypes.DATE,
+        allowNull: false
+    },
+    updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false
     }
+}, {
+    tableName: 'dresses', 
+    timestamps: false 
 });
 
 module.exports = Dress;

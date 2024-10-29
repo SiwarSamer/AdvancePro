@@ -8,7 +8,9 @@ const { JWT_SECRET_KEY } = require('./../middleware/middleware.js');
 const bcrypt = require('bcrypt');
 const User = require('../../../db/models/user.model.js'); // Adjust the path as necessary
 
+require('dotenv').config();
 const { loginSchema, signupSchema } = require('./../services/validation/validation.js');
+
 
 const login = async (req, res) => {
     try {
@@ -17,22 +19,36 @@ const login = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required." });
         }
+
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password." });
         }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
-        // If successful, return a success message and user info (omit sensitive data)
+        // Create JWT token
+        const payload = {
+            user: {
+                id: user.user_id,
+                email: user.email,
+                role: user.role
+            }
+        };
+
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        // If successful, return a success message, user info, and token
         return res.status(200).json({
             message: "Login successful",
+            token, // Include the JWT token in the response
             userId: user.user_id,
             role: user.role,
-            email: user.email,
+            email: user.email
         });
 
     } catch (error) {
@@ -41,6 +57,7 @@ const login = async (req, res) => {
     }
 };
 
+module.exports = { login };
 const signup = async (req, res) => {
     try {
         const { UserName, email, password, phone, address, role } = req.body;

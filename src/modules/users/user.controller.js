@@ -2,136 +2,181 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../../db/models/user.model');
 const Dress = require('../../../db/models/dress.model');
+const connection = require('../../../db/connection'); 
+const Order = require('../../../db/models/order.model');
+const Wishlist = require('../../../db/models/wishlist.model');
 require('dotenv').config();
- 
 
-exports.registerUser = async (req, res) => {
-    const { name, email, password, phone, address } = req.body;
+exports.getDressById = async (req, res) => {
+    const { id } = req.params; 
 
     try {
-        let user = await User.findOne({ where: { email } });
+        const dress = await Dress.findOne({ where: { id } }); 
 
-        if (user) {
-            return res.status(400).json({ msg: 'User already exists' });
+        if (!dress) {
+            return res.status(404).json({ message: "Dress not found" });
         }
 
-        user = User.build({
-            name,
-            email,
-            password,
-            phone,
-            address
+        res.json(dress);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+exports.listDresses = async (req, res) => {
+    try {
+        const dresses = await Dress.findAll();
+        res.json(dresses);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+exports.updateUserProfile = async (request, response) => {
+    const { ...otherUpdates } = request.body; 
+    const userEmail = request.user.email;  
+    
+    if (request.user.role === 'organizer') {
+        return response.status(401).json("You cannot access this page"); 
+    } else if (request.user.role === 'crafter') {
+        const sql = `UPDATE users SET ${Object.entries(otherUpdates).map(([key, value]) => `${key} = "${value}"`).join(', ')} WHERE email = '${userEmail}';`;
+        connection.execute(sql, (error, results) => {
+            if (error) {
+                return response.status(500).json(error);
+            }
+            return response.status(200).json({ message: "Updated successfully" });
+        });
+    } else if (request.user.role === 'vendor' || request.user.role === 'admin') {
+        const sql = `UPDATE users SET ? WHERE email = ?`; 
+        connection.execute(sql, [otherUpdates, userEmail], (error, results) => {
+            if (error) {
+                return response.status(500).json({ message: "Database error", error });
+            }
+            if (results.affectedRows === 0) {
+                return response.status(404).json({ message: "User not found" });
+            }
+            return response.status(200).json({ message: "Profile updated successfully" });
+        });
+    } else {
+        return response.status(400).json("Unknown role");
+    }
+};
+
+exports.searchDresses = async (req, res) => {
+    const { category,style, minPrice, maxPrice, availability } = req.query;
+
+    try {
+        const whereClause = {};
+        
+        // Add filters based on the query parameters
+        if (style) {
+            whereClause.style = style; 
+        }
+        if (minPrice) {
+            whereClause.price = { ...whereClause.price, [Op.gte]: parseFloat(minPrice) }; // Greater than or equal
+        }
+        if (maxPrice) {
+            whereClause.price = { ...whereClause.price, [Op.lte]: parseFloat(maxPrice) }; // Less than or equal
+        }
+        if (availability !== undefined) {
+            whereClause.available = availability === 'true'; // Convert string to boolean
+        }
+        
+        // Fetch the dresses based on the constructed where clause
+        const dresses = await Dress.findAll({ where: whereClause });
+
+        res.json(dresses);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+exports.getAllOrders = async (req, res) => {
+    const userEmail = req.user.email; 
+
+    try {
+        const orders = await Order.findAll({ where: { userEmail } }); // Fetch orders associated with the user's email
+        res.json(orders);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+exports.getOrderById = async (req, res) => {
+    const { orderId } = req.params; // Get the order ID from the request parameters
+    const userEmail = req.user.email; // Get the user's email from the JWT
+
+    try {
+        
+        const order = await Order.findOne({ where: { id: orderId, userEmail } });
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        res.json(order);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+
+exports.addToWishlist = async (req, res) => {
+    const userEmail = req.user.email; // Email from the logged-in user's JWT
+    const { dressId } = req.body;
+
+    try {
+        const existingItem = await Wishlist.findOne({ where: { userEmail, dressId } });
+
+        if (existingItem) {
+            return res.status(400).json({ message: "Dress already in wishlist" });
+        }
+
+        const wishlistItem = await Wishlist.create({ userEmail, dressId });
+        res.status(201).json({ message: "Dress added to wishlist", wishlistItem });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+// Get all wishlist items for the logged-in user
+exports.getWishlist = async (req, res) => {
+    const userEmail = req.user.email;
+
+    try {
+        const wishlist = await Wishlist.findAll({
+            where: { userEmail },
+            include: [{ model: Dress }] 
+        });
+        res.json(wishlist);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+// Remove a dress from the user's wishlist
+exports.removeFromWishlist = async (req, res) => {
+    const userEmail = req.user.email;
+    const { dressId } = req.params;
+
+    try {
+        const result = await Wishlist.destroy({
+            where: { userEmail, dressId }
         });
 
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        if (result === 0) {
+            return res.status(404).json({ message: "Dress not found in wishlist" });
+        }
 
-        await user.save();
-
-        const payload = {
-            user: {
-                id: user.user_id,
-                email: user.email
-            }
-        };
-
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' },  
-            (err, token) => {
-                if (err) throw err;
-                res.json({ token });
-            }
-        );
+        res.json({ message: "Dress removed from wishlist" });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
-    }
-};
-
-
-exports.loginUser = async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        let user = await User.findOne({ where: { email } });
-
-        if (!user) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
-        }
-
-        // Compare password
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
-        }
-
-        // Create JWT payload
-        const payload = {
-            user: {
-                id: user.user_id,
-                email: user.email
-            }
-        };
-
-        // Sign token
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' },  // Token expiration time
-            (err, token) => {
-                if (err) throw err;
-                
-                // Send success message and token to Postman
-                res.json({
-                    msg: 'Login successfully',  // Success message
-                    token                        // JWT token
-                });
-            }
-        );
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-};
-
-
-// Get user profile
-exports.getUserById = async (req, res) => {
-    const { id } = req.params; // Capture the user ID from the request parameters
-    try {
-        const user = await User.findByPk(id); // Find user by ID
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
-        res.json(user); // Respond with user data
-    } catch (err) {
-        console.error(err);
         res.status(500).json({ msg: 'Server error' });
     }
 };
-
-// Update user profile
-exports.updateUserProfile = async (req, res) => {
-    const { name, phone, address, profile_picture } = req.body;
-    try {
-        const user = await User.findByPk(req.user.user_id);
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
-
-        user.name = name || user.name;
-        user.phone = phone || user.phone;
-        user.address = address || user.address;
-        user.profile_picture = profile_picture || user.profile_picture;
-
-        await user.save();
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ msg: 'Server error' });
-    }
-};
-
