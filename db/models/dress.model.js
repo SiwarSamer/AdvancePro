@@ -28,6 +28,23 @@ const Dress = sequelize.define('Dress', {
         type: DataTypes.FLOAT,
         allowNull: false
     },
+    dailyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: false
+    },
+    weeklyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    monthlyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    discount: {
+        type: DataTypes.FLOAT, // Percentage discount for long rentals
+        allowNull: true,
+        defaultValue: 0
+    },
     description: {
         type: DataTypes.TEXT,
         allowNull: true
