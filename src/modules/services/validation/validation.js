@@ -43,17 +43,13 @@ const addProjectSchema = Joi.object({
 }).options({ abortEarly: false });
 
 
-
-const updateProjectSchema = Joi.object({
-    id: Joi.number().required(),
-    title: Joi.string(),
-    description: Joi.string(),
-    level: Joi.string(),
-    materials: Joi.string(),
-    size: Joi.number().min(0),
-    comments: Joi.string(),
-    skills: Joi.string()
-}).options({ allowUnknown: true }); 
+const updateProfileSchema = Joi.object({
+    name: Joi.string().optional(),
+    email: Joi.string().email().optional(),
+    phone: Joi.string().optional(),
+    address: Joi.string().optional(),
+    profile_picture: Joi.string().optional()
+}).options({ abortEarly: false });
 
 const createEventSchema = Joi.object({
     EventName: Joi.string().required(),
@@ -68,4 +64,4 @@ const joineventSchema = Joi.object({
 
 
 
-module.exports={loginSchema,signupSchema,addCrafterSchema,addProjectSchema,updateProjectSchema,createEventSchema,joineventSchema}
+module.exports={loginSchema,signupSchema,addCrafterSchema,addProjectSchema,updateProfileSchema,createEventSchema,joineventSchema}

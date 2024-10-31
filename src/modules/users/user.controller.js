@@ -33,35 +33,37 @@ exports.listDresses = async (req, res) => {
     }
 };
 
-exports.updateUserProfile = async (request, response) => {
-    const { ...otherUpdates } = request.body; 
-    const userEmail = request.user.email;  
-    
-    if (request.user.role === 'organizer') {
-        return response.status(401).json("You cannot access this page"); 
-    } else if (request.user.role === 'crafter') {
-        const sql = `UPDATE users SET ${Object.entries(otherUpdates).map(([key, value]) => `${key} = "${value}"`).join(', ')} WHERE email = '${userEmail}';`;
-        connection.execute(sql, (error, results) => {
-            if (error) {
-                return response.status(500).json(error);
-            }
-            return response.status(200).json({ message: "Updated successfully" });
-        });
-    } else if (request.user.role === 'vendor' || request.user.role === 'admin') {
-        const sql = `UPDATE users SET ? WHERE email = ?`; 
-        connection.execute(sql, [otherUpdates, userEmail], (error, results) => {
-            if (error) {
-                return response.status(500).json({ message: "Database error", error });
-            }
-            if (results.affectedRows === 0) {
-                return response.status(404).json({ message: "User not found" });
-            }
-            return response.status(200).json({ message: "Profile updated successfully" });
-        });
-    } else {
-        return response.status(400).json("Unknown role");
+
+
+
+exports.updateProfile = async (req, res) => {
+    const userId = req.user.id; 
+    const { name, email, phone, address, profile_picture } = req.body;
+
+    try {
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (phone) user.phone = phone;
+        if (address) user.address = address;
+        if (profile_picture) user.profile_picture = profile_picture;
+
+        await user.save();
+
+        res.json({ message: "Profile updated successfully", user });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: 'Server error' });
     }
 };
+
+
 
 exports.searchDresses = async (req, res) => {
     const { category,style, minPrice, maxPrice, availability } = req.query;

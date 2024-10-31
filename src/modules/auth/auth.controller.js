@@ -2,12 +2,12 @@ const express = require('express');
 const connection = require("../../../db/connection.js");
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
-const app = express(); // Creating an instance of Express application
+const app = express(); 
 app.use(bodyParser.json());
 const { JWT_SECRET_KEY } = require('./../middleware/middleware.js');
 const bcrypt = require('bcrypt');
-const User = require('../../../db/models/user.model.js'); // Adjust the path as necessary
-
+const User = require('../../../db/models/user.model.js');  
+const { sequelize } = require('../../../db/connection.js'); 
 require('dotenv').config();
 const { loginSchema, signupSchema } = require('./../services/validation/validation.js');
 
@@ -31,7 +31,7 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
-        // Create JWT token
+      
         const payload = {
             user: {
                 id: user.user_id,
@@ -39,8 +39,8 @@ const login = async (req, res) => {
                 role: user.role
             }
         };
-
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+        console.log(JWT_SECRET_KEY)
+        const token = jwt.sign(payload, JWT_SECRET_KEY, { algorithm: 'HS256', expiresIn: '1h' });
 
         // If successful, return a success message, user info, and token
         return res.status(200).json({
@@ -90,27 +90,28 @@ const signup = async (req, res) => {
     }
 };
 
-const logout = async (req, res) => {
-    try {
-      const token = req.header('Authorization'); 
-  console.log(token)
-      const sql = `DELETE FROM tokens WHERE token = "${token}"`;
-      connection.execute(sql, (error, results) => {
-        if (error) {
-          console.error(error);
-          return res.status(500).json({ error: 'An error occurred while logging out' });
-        }
-        console.log('Token removed from the database');
-      });
-  
-     return res.status(200).json( {
-        "message": "Logout successful...See you soon!"
-    })
-    } catch (err) {
-      console.error(err);
-      res.status(500).json(err.stack );
-    }
-  };
+
   
 
+  const logout = async (req, res) => {
+      try {
+          const token = req.header('Authorization'); 
+          console.log(token);
+          
+          const sql = `DELETE FROM tokens WHERE token = :token`;
+          await sequelize.query(sql, {
+              replacements: { token },
+              type: sequelize.QueryTypes.DELETE
+          });
+  
+          console.log('Token removed from the database');
+          return res.status(200).json({
+              message: "Logout successful...See you soon!"
+          });
+      } catch (err) {
+          console.error(err);
+          res.status(500).json({ error: err.message });
+      }
+  };
+  
 module.exports = { login, signup,logout};

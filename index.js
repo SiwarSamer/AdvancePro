@@ -2,17 +2,15 @@ const express = require('express');
 const sequelize = require('./db/connection.js');
 const userRoutes = require('./src/modules/users/user.js');
 const authRoutes = require('./src/modules/auth/auth.js'); 
-
 const app = express();
 const cors = require('cors');
+require('dotenv').config();
 
 app.use(cors());
 app.use(express.json());
 
 
 app.use('/api/users', userRoutes);
-
-
 app.use('/api/auth', authRoutes); 
 
 sequelize.sync()
