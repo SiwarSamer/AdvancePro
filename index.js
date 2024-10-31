@@ -1,6 +1,6 @@
 const express = require('express');
 const sequelize = require('./db/connection.js');
-const userRoutes = require('./src/modules/users/user.js');
+const userRoutes = require('./src/modules/roles/users/user.js');
 const authRoutes = require('./src/modules/auth/auth.js'); 
 const app = express();
 const cors = require('cors');
