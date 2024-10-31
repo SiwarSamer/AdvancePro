@@ -66,34 +66,94 @@ exports.updateProfile = async (req, res) => {
 
 
 exports.searchDresses = async (req, res) => {
-    const { category,style, minPrice, maxPrice, availability } = req.query;
+    const { category, style, minPrice, maxPrice, availability, color, size } = req.query;
+    console.log("Query parameters:", req.query);  // Add this line
 
     try {
         const whereClause = {};
-        
+
         // Add filters based on the query parameters
         if (style) {
-            whereClause.style = style; 
+            whereClause.style = style;
+        }
+        if (color) {
+            whereClause.color = color;
+        }
+        if (size) {
+            whereClause.size = size;
         }
         if (minPrice) {
-            whereClause.price = { ...whereClause.price, [Op.gte]: parseFloat(minPrice) }; // Greater than or equal
+            whereClause.price = { ...whereClause.price, [Op.gte]: parseFloat(minPrice) };
         }
         if (maxPrice) {
-            whereClause.price = { ...whereClause.price, [Op.lte]: parseFloat(maxPrice) }; // Less than or equal
+            whereClause.price = { ...whereClause.price, [Op.lte]: parseFloat(maxPrice) };
         }
         if (availability !== undefined) {
-            whereClause.available = availability === 'true'; // Convert string to boolean
+            whereClause.available = availability === 'true';  // Convert string to boolean
         }
-        
+
+        // Log the final whereClause for debugging
+        console.log("Where clause:", whereClause);
+
         // Fetch the dresses based on the constructed where clause
         const dresses = await Dress.findAll({ where: whereClause });
-
         res.json(dresses);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ msg: 'Server error' });
     }
 };
+
+
+exports.createOrder = async (req, res) => {
+    const userEmail = req.user.email; // User's email from JWT
+    const { dressId, quantity, orderType, rentalStartDate, rentalEndDate } = req.body;
+
+    try {
+        // Check if `dressId`, `quantity`, and `orderType` are provided
+        if (!dressId || !quantity || !orderType) {
+            return res.status(400).json({ message: "Dress ID, quantity, and order type are required" });
+        }
+
+        // Fetch the dress to verify it exists and get the price
+        const dress = await Dress.findOne({ where: { id: dressId } });
+        if (!dress) {
+            return res.status(404).json({ message: "Dress not found" });
+        }
+
+        // Calculate total price (assuming rental price calculation would differ if needed)
+        const totalPrice = dress.price * quantity;
+
+        // If it's a rental, validate dates and set them in the order
+        if (orderType === 'rental') {
+            if (!rentalStartDate || !rentalEndDate) {
+                return res.status(400).json({ message: "Rental start and end dates are required for rental orders" });
+            }
+        }
+
+        // Create the order
+        const newOrder = await Order.create({
+            userEmail,
+            dressId,
+            quantity,
+            orderType,
+            totalPrice,
+            rentalStartDate: orderType === 'rental' ? rentalStartDate : null,
+            rentalEndDate: orderType === 'rental' ? rentalEndDate : null,
+            status: 'pending', // Default status
+        });
+
+        res.status(201).json({
+            message: "Order created successfully",
+            order: newOrder
+        });
+    } catch (err) {
+        console.error("Error creating order:", err);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+
 
 exports.getAllOrders = async (req, res) => {
     const userEmail = req.user.email; 

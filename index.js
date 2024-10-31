@@ -4,6 +4,7 @@ const userRoutes = require('./src/modules/users/user.js');
 const authRoutes = require('./src/modules/auth/auth.js'); 
 const app = express();
 const cors = require('cors');
+const { Dress, Wishlist } = require('./db/models/associations'); 
 require('dotenv').config();
 
 app.use(cors());

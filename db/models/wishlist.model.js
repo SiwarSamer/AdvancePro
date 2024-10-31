@@ -1,3 +1,4 @@
+// db/models/wishlist.model.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../connection'); 
 
@@ -15,7 +16,7 @@ const Wishlist = sequelize.define('Wishlist', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'dresses', // Table name
+            model: 'dresses', // Ensure this matches the table name in your database
             key: 'id'
         }
     }
