@@ -1,4 +1,4 @@
-// db/models/dress.model.js
+// db/models/dress.model.js/
 const { DataTypes } = require('sequelize');
 const sequelize = require('../connection'); // Adjust according to your Sequelize instance
 
@@ -26,7 +26,11 @@ const Dress = sequelize.define('Dress', {
     },
     price: {
         type: DataTypes.FLOAT,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            isFloat: true,
+            min: 0 // Ensure price is non-negative
+        }
     },
     dailyRate: {
         type: DataTypes.FLOAT,
@@ -49,6 +53,22 @@ const Dress = sequelize.define('Dress', {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    pickupLatitude: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        validate: {
+            min: -90,
+            max: 90 // Valid latitude range
+        }
+    },
+    pickupLongitude: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+        validate: {
+            min: -180,
+            max: 180 // Valid longitude range
+        }
+    },
     created_at: {
         type: DataTypes.DATE,
         allowNull: false
@@ -58,8 +78,18 @@ const Dress = sequelize.define('Dress', {
         allowNull: false
     }
 }, {
-    tableName: 'dresses', 
-    timestamps: false 
+    tableName: 'dresses',
+    timestamps: false,
+    indexes: [
+        {
+            unique: false,
+            fields: ['available']
+        },
+        {
+            unique: false,
+            fields: ['pickupLatitude', 'pickupLongitude']
+        }
+    ]
 });
 
 module.exports = Dress;
