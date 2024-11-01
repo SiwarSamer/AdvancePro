@@ -32,3 +32,6 @@ Recommendation.belongsTo(User, { foreignKey: 'user_id' });
 
 // Export the sequelize instance and the models
 module.exports = { sequelize, User, Rental, Review, Recommendation };
+sequelize.sync({ alter: true })
+    .then(() => console.log('Models synchronized with the database...'))
+    .catch(err => console.log('Error synchronizing models: ' + err));
