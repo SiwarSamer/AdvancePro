@@ -1,6 +1,7 @@
-// db/models/dress.model.js/
+// db/models/dress.model.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../connection'); // Adjust according to your Sequelize instance
+const User = require('./user.model'); // Import the User model
 
 const Dress = sequelize.define('Dress', {
     id: {
@@ -29,7 +30,7 @@ const Dress = sequelize.define('Dress', {
         allowNull: false,
         validate: {
             isFloat: true,
-            min: 0 // Ensure price is non-negative
+            min: 0
         }
     },
     dailyRate: {
@@ -45,7 +46,7 @@ const Dress = sequelize.define('Dress', {
         allowNull: true
     },
     discount: {
-        type: DataTypes.FLOAT, // Percentage discount for long rentals
+        type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0
     },
@@ -58,7 +59,7 @@ const Dress = sequelize.define('Dress', {
         allowNull: true,
         validate: {
             min: -90,
-            max: 90 // Valid latitude range
+            max: 90
         }
     },
     pickupLongitude: {
@@ -66,8 +67,16 @@ const Dress = sequelize.define('Dress', {
         allowNull: true,
         validate: {
             min: -180,
-            max: 180 // Valid longitude range
+            max: 180
         }
+    },
+    user_id: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: User,
+            key: 'user_id'
+        },
+        allowNull: false
     },
     created_at: {
         type: DataTypes.DATE,
@@ -80,16 +89,6 @@ const Dress = sequelize.define('Dress', {
 }, {
     tableName: 'dresses',
     timestamps: false,
-    indexes: [
-        {
-            unique: false,
-            fields: ['available']
-        },
-        {
-            unique: false,
-            fields: ['pickupLatitude', 'pickupLongitude']
-        }
-    ]
 });
 
 module.exports = Dress;
