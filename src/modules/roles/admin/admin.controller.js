@@ -14,8 +14,7 @@ exports.addDress = async (req, res) => {
       color,
       available,
       price,
-      description,
-      approved: false, // Default approval status
+      description
     });
 
     res.status(201).json({ message: 'Dress added successfully', dress });
@@ -23,6 +22,8 @@ exports.addDress = async (req, res) => {
     res.status(500).json({ message: 'Error adding dress', error });
   }
 };
+
+
 
 // Function to delete a dress (Admin function)
 exports.deleteDress = async (req, res) => {

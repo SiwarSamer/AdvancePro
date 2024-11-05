@@ -11,27 +11,30 @@ const { sequelize } = require('../../../db/connection.js');
 require('dotenv').config();
 const { loginSchema, signupSchema } = require('./../services/validation/validation.js');
 
-
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Validate request
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required." });
         }
 
+        // Fetch user by email
         const user = await User.findOne({ where: { email } });
 
+        // Check if user exists
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
+        // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
-      
+        // Create JWT payload
         const payload = {
             user: {
                 id: user.user_id,
@@ -39,13 +42,25 @@ const login = async (req, res) => {
                 role: user.role
             }
         };
-        console.log(JWT_SECRET_KEY)
+
+        // Sign the token
         const token = jwt.sign(payload, JWT_SECRET_KEY, { algorithm: 'HS256', expiresIn: '1h' });
 
-        // If successful, return a success message, user info, and token
+        // Check for admin role
+        if (user.role === "admin") {
+            return res.status(200).json({
+                message: "Admin login successful",
+                token,
+                userId: user.user_id,
+                role: user.role,
+                email: user.email
+            });
+        }
+
+        // Respond for non-admin login
         return res.status(200).json({
             message: "Login successful",
-            token, // Include the JWT token in the response
+            token,
             userId: user.user_id,
             role: user.role,
             email: user.email
@@ -57,12 +72,13 @@ const login = async (req, res) => {
     }
 };
 
+
 module.exports = { login };
 const signup = async (req, res) => {
     try {
         const { UserName, email, password, phone, address, role } = req.body;
 
-        // Validate input here (ensure you're validating UserName as well)
+        // Validate required fields
         if (!UserName || !email || !password) {
             return res.status(400).json({ message: "Username, email, and password are required." });
         }
@@ -71,9 +87,9 @@ const signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         console.log("Hashed password:", hashedPassword);
 
-        // Create a new user using Sequelize
+        // Create a new user with any role (including admin)
         const newUser = await User.create({
-            name: UserName, // Assuming UserName corresponds to the user's name
+            name: UserName, 
             email,
             password: hashedPassword,
             phone,
@@ -91,27 +107,19 @@ const signup = async (req, res) => {
 };
 
 
-  
 
-  const logout = async (req, res) => {
-      try {
-          const token = req.header('Authorization'); 
-          console.log(token);
-          
-          const sql = `DELETE FROM tokens WHERE token = :token`;
-          await sequelize.query(sql, {
-              replacements: { token },
-              type: sequelize.QueryTypes.DELETE
-          });
   
-          console.log('Token removed from the database');
-          return res.status(200).json({
-              message: "Logout successful...See you soon!"
-          });
-      } catch (err) {
-          console.error(err);
-          res.status(500).json({ error: err.message });
-      }
-  };
-  
-module.exports = { login, signup,logout};
+const logout = async (req, res) => {
+    try {
+        // If token is stored in a cookie, clear it by setting an expired date
+        res.cookie('token', '', { expires: new Date(0), httpOnly: true });
+
+        return res.status(200).json({ message: "Logout successful" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+module.exports = { login, signup, logout };
+

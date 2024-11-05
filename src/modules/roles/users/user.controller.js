@@ -5,6 +5,8 @@ const Dress = require('../../../../db/models/dress.model');
 const connection = require('../../../../db/connection'); 
 const Order = require('../../../../db/models/order.model');
 const Wishlist = require('../../../../db/models/wishlist.model');
+const { Op } = require('sequelize');
+
 require('dotenv').config();
 
 exports.getDressById = async (req, res) => {

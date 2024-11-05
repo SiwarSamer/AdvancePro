@@ -1,4 +1,3 @@
-// db/models/dress.model.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../connection'); // Adjust according to your Sequelize instance
 
@@ -28,38 +27,40 @@ const Dress = sequelize.define('Dress', {
         type: DataTypes.FLOAT,
         allowNull: false
     },
-    dailyRate: {
-        type: DataTypes.FLOAT,
-        allowNull: false
-    },
-    weeklyRate: {
-        type: DataTypes.FLOAT,
-        allowNull: true
-    },
-    monthlyRate: {
-        type: DataTypes.FLOAT,
-        allowNull: true
-    },
-    discount: {
-        type: DataTypes.FLOAT, // Percentage discount for long rentals
-        allowNull: true,
-        defaultValue: 0
-    },
     description: {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    // New fields added here
+    dailyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: true // or false depending on your requirements
+    },
+    weeklyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: true // or false depending on your requirements
+    },
+    monthlyRate: {
+        type: DataTypes.FLOAT,
+        allowNull: true // or false depending on your requirements
+    },
+    discount: {
+        type: DataTypes.FLOAT,
+        allowNull: true // or false depending on your requirements
+    },
     created_at: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     },
     updated_at: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: 'dresses', 
-    timestamps: false 
+    timestamps: false // If you want Sequelize to automatically manage createdAt and updatedAt, set this to true
 });
 
 module.exports = Dress;
