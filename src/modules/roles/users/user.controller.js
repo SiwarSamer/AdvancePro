@@ -108,25 +108,23 @@ exports.searchDresses = async (req, res) => {
 
 
 exports.createOrder = async (req, res) => {
-    const userEmail = req.user.email; // User's email from JWT
+    const userEmail = req.user.email; 
     const { dressId, quantity, orderType, rentalStartDate, rentalEndDate } = req.body;
 
     try {
-        // Check if `dressId`, `quantity`, and `orderType` are provided
+ 
         if (!dressId || !quantity || !orderType) {
             return res.status(400).json({ message: "Dress ID, quantity, and order type are required" });
         }
 
-        // Fetch the dress to verify it exists and get the price
         const dress = await Dress.findOne({ where: { id: dressId } });
         if (!dress) {
             return res.status(404).json({ message: "Dress not found" });
         }
 
-        // Calculate total price (assuming rental price calculation would differ if needed)
         const totalPrice = dress.price * quantity;
 
-        // If it's a rental, validate dates and set them in the order
+
         if (orderType === 'rental') {
             if (!rentalStartDate || !rentalEndDate) {
                 return res.status(400).json({ message: "Rental start and end dates are required for rental orders" });
@@ -161,7 +159,7 @@ exports.getAllOrders = async (req, res) => {
     const userEmail = req.user.email; 
 
     try {
-        const orders = await Order.findAll({ where: { userEmail } }); // Fetch orders associated with the user's email
+        const orders = await Order.findAll({ where: { userEmail } }); 
         res.json(orders);
     } catch (err) {
         console.error(err.message);
@@ -170,8 +168,8 @@ exports.getAllOrders = async (req, res) => {
 };
 
 exports.getOrderById = async (req, res) => {
-    const { orderId } = req.params; // Get the order ID from the request parameters
-    const userEmail = req.user.email; // Get the user's email from the JWT
+    const { orderId } = req.params; 
+    const userEmail = req.user.email; 
 
     try {
         
