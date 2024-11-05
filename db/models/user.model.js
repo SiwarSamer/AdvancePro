@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../connection');
 
-
 const User = sequelize.define('User', {
     user_id: {
         type: DataTypes.INTEGER,
@@ -28,6 +27,10 @@ const User = sequelize.define('User', {
     address: {
         type: DataTypes.STRING,
         allowNull: true,
+    },
+    city: {  // Add city field
+        type: DataTypes.STRING,
+        allowNull: true,  // Set to false if city is a required field
     },
     profile_picture: {
         type: DataTypes.STRING,
