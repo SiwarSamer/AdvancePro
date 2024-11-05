@@ -1,4 +1,4 @@
-const Review = require('../../models/review.model');
+const Review = require('../../../db/models/reviews.model');
 
 // POST: Add a review
 exports.addReview = (req, res) => {
