@@ -1,7 +1,5 @@
 # AdvancePro
-Here’s a sample `README.md` file for your "DressOnDemand" project:
 
-```markdown
 # DressOnDemand
 
 **DressOnDemand** is a sustainable fashion rental platform that allows customers to rent dresses for special occasions. The platform provides a wide variety of dresses categorized by style, season, and color, helping users choose the perfect outfit without the need to purchase. Through flexible rental durations, location-based recommendations, and a seamless rental experience, we aim to make fashion more accessible and eco-friendly.
